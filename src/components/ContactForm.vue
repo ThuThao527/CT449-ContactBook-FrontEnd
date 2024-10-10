@@ -30,9 +30,9 @@
         <strong>Liên hệ yêu thích</strong>
       </label>
     </div>
-
+    
     <div class="form-group">
-      <button class="btn btn-primary">Lưu</button>
+      <button class="btn btn-primary" @click="submitContact">Lưu</button>
       <button v-if="contactLocal._id" type="button" class="ml-2 btn btn-danger" @click="deleteContact">
         Xóa
       </button>
@@ -44,56 +44,68 @@
 </template>
 
 <script>
-import { Form, Field, ErrorMessage } from 'vee-validate';
-import * as yup from 'yup';
-import { mapActions } from 'vuex';
-import { cloneDeep } from 'lodash';
-
+import "bootstrap/dist/css/bootstrap.min.css";
+import "@fortawesome/fontawesome-free/css/all.min.css";
+import * as yup from "yup";
+import { Form, Field, ErrorMessage } from "vee-validate";
 export default {
+  components: {
+    Form,
+    Field,
+    ErrorMessage,
+  },
+  emits: ["submit:contact", "delete:contact"],
   props: {
-    contact: {
-      type: Object,
-      required: true,
-    },
+    contact: { type: Object, required: true }
   },
   data() {
+    const contactFormSchema = yup.object().shape({
+      name: yup
+          .string()
+          .required("Tên phải có giá trị.")
+          .min(2, "Tên phải ít nhất 2 ký tự.")
+          .max(50, "Tên có nhiều nhất 50 ký tự."),
+      email: yup
+          .string()
+          .email("E-mail không đúng.")
+          .max(50, "E-mail tối đa 50 ký tự."),
+      address: yup.string().max(100, "Địa chỉ tối đa 100 ký tự."),
+      phone: yup
+          .string()
+          .matches(
+              /((09|03|07|08|05)+([0-9]{8})\b)/g,
+              "Số điện thoại không hợp lệ."
+          ),
+    });
     return {
-      contactLocal: cloneDeep(this.contact),
-      contactFormSchema: yup.object().shape({
-        name: yup
-          .string()
-          .required('Tên phải có giá trị.')
-          .min(2, 'Tên phải ít nhất 2 ký tự.')
-          .max(50, 'Tên có nhiều nhất 50 ký tự.'),
-        email: yup
-          .string()
-          .email('E-mail không đúng.')
-          .max(50, 'E-mail tối đa 50 ký tự.'),
-        address: yup.string().max(100, 'Địa chỉ tối đa 100 ký tự.'),
-        phone: yup
-          .string()
-          .matches(/((09|03|07|08|05)+([0-9]{8})\b)/g, 'Số điện thoại không hợp lệ.'),
-      }),
+// Chúng ta sẽ không muốn hiệu chỉnh props, nên tạo biến cục bộ
+// contactLocal để liên kết với các input trên form
+      contactLocal: this.contact,
+      contactFormSchema,
     };
   },
+
   methods: {
-    ...mapActions(['submitContact', 'deleteContact']),
+
     submitContact() {
-      this.$emit('submit:contact', this.contactLocal);
+      this.$emit("submit:contact", this.contactLocal);
     },
     deleteContact() {
-      this.$emit('delete:contact', this.contactLocal.id);
+      this.$emit("delete:contact", this.contactLocal.id);
     },
-    Cancel() {
-      const reply = window.confirm('You have unsaved changes! Do you want to leave?');
-      if (reply) {
-        this.$router.push({ name: 'contactbook' });
+    Cancel(){
+      const reply = window.confirm('You have unsaved changes! Do you want to leave?')
+      if (!reply) {
+// stay on the page if
+// user clicks 'Cancel'
+        return false
       }
-    },
+      else this.$router.push({ name: "contactbook" });
+    }
   },
 };
 </script>
 
 <style scoped>
-@import "@/assets/form.css";
+  @import "@/assets/form.css";
 </style>
